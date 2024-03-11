@@ -1,0 +1,13 @@
+diff --git a/java-test-projects/complex-numbers/src/main/java/net/jsussman/dummyapp/ExampleClass.java b/ExampleClassAfterChange.java
+index f623a83..02b5458 100644
+--- a/java-test-projects/complex-numbers/src/main/java/net/jsussman/dummyapp/ExampleClass.java
++++ b/ExampleClassAfterChange.java
+@@ -1,7 +1,7 @@
+ package net.jsussman.dummyapp;
+ 
+ public class ExampleClass {
+-  public int property;
++  public int changed;
+   
+   public ExampleClass() { }  
+ }
