@@ -189,7 +189,13 @@ def pb_format(args: list, pb_env: Env, pb_vars: dict) -> str:
     if len(args) == 1:
         return section.format_with_raise(pb_vars)
 
-    pb_vars = pb_vars[pb_eval(args[1], pb_env, pb_vars)]
+    pb_vars_key = pb_eval(args[1], pb_env, pb_vars)
+    try:
+        pb_vars = pb_vars[pb_vars_key]
+    except KeyError as e:
+        raise PBError(f"pb_build: Could not find key in pb_vars: {pb_vars_key}") from e
+
+    # pb_vars = pb_vars[pb_eval(args[1], pb_env, pb_vars)]
     if isinstance(pb_vars, dict):
         return section.format_with_raise(pb_vars)
     if not isinstance(pb_vars, list):
@@ -248,7 +254,13 @@ def pb_build(args: list, pb_env: Env, pb_vars: dict):
             result = pb_eval(s, pb_env, pb_vars)
         return result
 
-    pb_vars = pb_vars[pb_eval(args[1], pb_env, pb_vars)]
+    pb_vars_key = pb_eval(args[1], pb_env, pb_vars)
+    try:
+        pb_vars = pb_vars[pb_vars_key]
+    except KeyError as e:
+        raise PBError(f"pb_build: Could not find key in pb_vars: {pb_vars_key}") from e
+
+    # pb_vars = pb_vars[pb_eval(args[1], pb_env, pb_vars)]
     if isinstance(pb_vars, dict):
         for s in section.build_steps:
             r = pb_eval(s, pb_env, pb_vars)
@@ -383,7 +395,11 @@ CONFIG_IBM_LLAMA = "$ibm_llama_model"
 
 
 def build_prompt(section_name: str, pb_vars: dict):
-    section = global_env.find(section_name)[section_name]
+    env = global_env.find(section_name)
+    if env is None:
+        raise PBError(f"Couldn't find section name: {section_name}")
+
+    section = env[section_name]
     if not isinstance(section, Section):
         raise PBError(f"Not a section. Got type: {type(section)}")
 
