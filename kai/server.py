@@ -418,6 +418,7 @@ async def get_incident_solutions_for_file(request: Request):
     - application_name (str)
     - batch_mode (str optional, one of 'sequential', 'none', 'violation', 'violation_and_variables')
     - include_solved_incident (bool optional)
+    - include_llm_results (bool optional)
     - incidents (list)
         - ruleset_name (str)
         - violation_name (str)
@@ -425,7 +426,6 @@ async def get_incident_solutions_for_file(request: Request):
         - incident_variables (object)
         - line_number: 0-indexed (let's keep it consistent)
         - analysis_message (str)
-    - include_llm_results (bool)
     """
     start = time.time()
     KAI_LOG.debug(f"get_incident_solutions_for_file recv'd: {request}")
@@ -520,16 +520,24 @@ async def get_incident_solutions_for_file(request: Request):
                 content = parse_file_solution_content(
                     src_file_language, llm_result.content
                 )
+
+                if not content.updated_file:
+                    raise Exception(
+                        f"Error in LLM Response: The LLM did not provide an updated file for {request_json['file_name']}"
+                    )
+
+                if content.parse_error:
+                    raise Exception(
+                        f"Error in LLM Response: The LLM did not provide a file with a valid parse for {request_json['file_name']}"
+                    )
+
                 if request_json.get("include_llm_results"):
                     llm_results.append(llm_result.content)
 
                 total_reasoning.append(content.reasoning)
                 used_prompts.append(prompt)
                 additional_info.append(content.additional_info)
-                if not content.updated_file:
-                    raise Exception(
-                        f"Error in LLM Response: The LLM did not provide an updated file for {request_json['file_name']}"
-                    )
+
                 updated_file = content.updated_file
                 break
             except Exception as e:
