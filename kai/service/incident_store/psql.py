@@ -110,6 +110,9 @@ class PSQLAcceptedSolution(Base):
         back_populates="solution", cascade="all, delete-orphan"
     )
 
+    def __repr__(self):
+        return f"PSQLAcceptedSolution(solution_id={self.solution_id}, generated_at={self.generated_at}, solution_big_diff={self.solution_big_diff:.10}, solution_small_diff={self.solution_small_diff:.10}, solution_original_code={self.solution_original_code:.10}, solution_updated_code={self.solution_updated_code:.10})"
+
 
 class PSQLIncident(Base):
     __tablename__ = "incidents"
@@ -141,6 +144,9 @@ class PSQLIncident(Base):
     application: Mapped[PSQLApplication] = relationship(back_populates="incidents")
     solution: Mapped[PSQLAcceptedSolution] = relationship(back_populates="incidents")
 
+    def __repr__(self) -> str:
+        return f"PSQLIncident(violation_name={self.violation_name}, ruleset_name={self.ruleset_name}, application_name={self.application_name}, incident_uri={self.incident_uri}, incident_snip={self.incident_snip:.10}, incident_line={self.incident_line}, incident_variables={self.incident_variables}, solution_id={self.solution_id})"
+
 
 # def dump(sql, *multiparams, **params):
 #     print(sql.compile(dialect=engine.dialect))
@@ -151,11 +157,11 @@ class PSQLIncident(Base):
 # exit()
 
 
-# TODO(@JonahSussman): Migrate this to use an ORM
 class PSQLIncidentStore(IncidentStore):
     def __init__(self, args: KaiConfigIncidentStorePostgreSQLArgs):
         self.engine = create_engine(
-            f"postgresql://{args.user}:{args.password}@{args.host}:5432/{args.database}"
+            f"postgresql://{args.user}:{args.password}@{args.host}:5432/{args.database}",
+            client_encoding="utf8",
         )
 
     def create_tables(self):
@@ -219,6 +225,10 @@ class PSQLIncidentStore(IncidentStore):
                 session.add(application)
                 session.commit()
 
+            # TODO: Determine if we want to have this check
+            # if application.generated_at >= app.generated_at:
+            #     return 0, 0, 0
+
             old_commit = application.current_commit
 
             report_dict = dict(report)
@@ -272,6 +282,7 @@ class PSQLIncidentStore(IncidentStore):
                             )
                         )
 
+            # incidents_temp - incidents
             new_incidents = set(incidents_temp) - set(application.incidents)
             number_new_incidents = len(new_incidents)
 
@@ -280,6 +291,7 @@ class PSQLIncidentStore(IncidentStore):
 
             session.commit()
 
+            # incidents `intersect` incidents_temp
             unsolved_incidents = set(application.incidents).intersection(incidents_temp)
             number_unsolved_incidents = len(unsolved_incidents)
 
@@ -287,6 +299,7 @@ class PSQLIncidentStore(IncidentStore):
             solved_incidents = set(application.incidents) - set(incidents_temp)
             number_solved_incidents = len(solved_incidents)
             KAI_LOG.debug(f"Number of solved incidents: {len(solved_incidents)}")
+            KAI_LOG.debug(f"{solved_incidents=}")
 
             for solved_incident in solved_incidents:
                 file_path = os.path.join(
@@ -298,24 +311,41 @@ class PSQLIncidentStore(IncidentStore):
                         "/tmp/source-code/"  # trunk-ignore(bandit/B108)
                     ),
                 )
-                big_diff = repo.git.diff(old_commit, new_commit)
+
+                # NOTE: The `big_diff` functionality is currently disabled
+
+                # big_diff: str = repo.git.diff(old_commit, new_commit).encode('utf-8', errors="ignore").decode()
+                big_diff = ""
+
+                # TODO: Some of the sample repos have invalid utf-8 characters,
+                # thus the encode-then-decode hack. Not very performant, there's
+                # probably a better way to handle this.
 
                 try:
-                    original_code = repo.git.show(f"{old_commit}:{file_path}")
-                except Exception as e:
-                    KAI_LOG.error(e)
+                    original_code = (
+                        repo.git.show(f"{old_commit}:{file_path}")
+                        .encode("utf-8", errors="ignore")
+                        .decode()
+                    )
+                except Exception:
                     original_code = ""
 
                 try:
-                    updated_code = repo.git.show(f"{new_commit}:{file_path}")
-                except Exception as e:
-                    KAI_LOG.error(e)
+                    updated_code = (
+                        repo.git.show(f"{new_commit}:{file_path}")
+                        .encode("utf-8", errors="ignore")
+                        .decode()
+                    )
+                except Exception:
                     updated_code = ""
 
-                # file_path = pathlib.Path(os.path.join(repo_path, unquote(urlparse(si[3]).path).removeprefix('/tmp/source-code'))).as_uri()
-                small_diff = repo.git.diff(old_commit, new_commit, "--", file_path)
-                KAI_LOG.debug(small_diff)
+                small_diff = (
+                    repo.git.diff(old_commit, new_commit, "--", file_path)
+                    .encode("utf-8", errors="ignore")
+                    .decode()
+                )
 
+                # TODO: Strings must be utf-8 encodable, so I'm removing the `big_diff` functionality for now
                 solved_incident.solution = PSQLAcceptedSolution(
                     generated_at=app.generated_at,
                     solution_big_diff=big_diff,
@@ -323,6 +353,8 @@ class PSQLIncidentStore(IncidentStore):
                     solution_original_code=original_code,
                     solution_updated_code=updated_code,
                 )
+
+                session.commit()
 
             application.repo_uri_origin = app.repo_uri_origin
             application.repo_uri_local = app.repo_uri_local
