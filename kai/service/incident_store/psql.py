@@ -42,6 +42,16 @@ class Base(DeclarativeBase):
     }
 
 
+class PSQLUnmodifiedReport(Base):
+    __tablename__ = "unmodified_reports"
+
+    application_name: Mapped[str] = mapped_column(primary_key=True)
+    generated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(), server_default=func.now(), primary_key=True
+    )
+    report: Mapped[dict[str, Any]]
+
+
 class ViolationCategory(enum.Enum):
     potential = "potential"
     optional = "optional"
@@ -362,6 +372,16 @@ class PSQLIncidentStore(IncidentStore):
             application.current_commit = app.current_commit
             application.generated_at = app.generated_at
 
+            session.commit()
+
+            unmodified_report = PSQLUnmodifiedReport(
+                application_name=app.application_name,
+                generated_at=app.generated_at,
+                report=report_dict,
+            )
+
+            # Upsert the unmodified report
+            session.merge(unmodified_report)
             session.commit()
 
         return number_new_incidents, number_unsolved_incidents, number_solved_incidents
