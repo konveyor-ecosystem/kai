@@ -309,7 +309,7 @@ class PSQLIncidentStore(IncidentStore):
             solved_incidents = set(application.incidents) - set(incidents_temp)
             number_solved_incidents = len(solved_incidents)
             KAI_LOG.debug(f"Number of solved incidents: {len(solved_incidents)}")
-            KAI_LOG.debug(f"{solved_incidents=}")
+            # KAI_LOG.debug(f"{solved_incidents=}")
 
             for solved_incident in solved_incidents:
                 file_path = os.path.join(
