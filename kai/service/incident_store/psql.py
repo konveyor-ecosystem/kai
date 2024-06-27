@@ -27,9 +27,7 @@ from kai.service.incident_store.incident_store import (
     Application,
     IncidentStore,
     Solution,
-    filter_incident_vars,
     load_reports_from_directory,
-    remove_known_prefixes,
 )
 
 # have a logical category of un-mutated reports and one with the mutations
