@@ -121,8 +121,6 @@ def load_reports_from_directory(store: "IncidentStore", path: str):
             generated_at=datetime.datetime.now(),
         )
 
-        KAI_LOG.info(f"Loading application {app}\n")
-
         store.load_report(app_initial, Report.load_report_from_file(report_path))
         KAI_LOG.info(f"Loaded application - initial {app}\n")
 

@@ -81,7 +81,7 @@ def get_prompt(
         if not fallback:
             raise e
 
-        KAI_LOG.error(f"Template '{e.name}' not found. Falling back to main.jinja")
+        KAI_LOG.warning(f"Template '{e.name}' not found. Falling back to main.jinja")
         template = jinja_env.get_template("main.jinja")
 
     KAI_LOG.debug(f"Template {template.filename} loaded")
