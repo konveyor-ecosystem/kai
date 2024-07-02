@@ -1,9 +1,9 @@
 version: "3.4"
 
 x-common-variables: &common-variables
-  POSTGRES_USER: foo
-  POSTGRES_PASSWORD: bar
-  POSTGRES_DB: baz
+  POSTGRES_USER: kai
+  POSTGRES_PASSWORD: dog8code
+  POSTGRES_DB: kai
 
 services:
   kai:
@@ -12,6 +12,9 @@ services:
       LOGLEVEL: info
       DEMO_MODE: False
       NUM_WORKERS: 8
+      USE_HUB_IMPORTER: False
+      HUB_URL: "https://localhost"
+      IMPORTER_ARGS: ""
       # Do not edit the variables below otherwise
       # you risk committing keys to a public repo
       # These lines will pass in the environment
