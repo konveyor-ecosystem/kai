@@ -15,12 +15,18 @@ if [[ $(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "kai_db" -U $POSTGRES_USER -d $P
 then
     echo "load-data has run already"
 else
-    echo "load-data has not run yet, starting ..."
-    echo "Fetching examples"
-    cd /kai/samples
-    ./fetch_apps.py
-    cd /kai
-    python ./kai/service/incident_store/psql.py  --config_filepath ./kai/config.toml --drop_tables False
+  echo "load-data has not run yet, starting ..."
+  echo "Fetching examples"
+  if [ "$USE_HUB_IMPORTER" = "True" ]
+  then
+      cd /kai
+      python ./kai/hub_importer.py --loglevel ${LOGLEVEL} --config_filepath ./kai/config.toml ${IMPORTER_ARGS} ${HUB_URL}
+  else
+      cd /kai/samples
+      ./fetch_apps.py
+      cd /kai
+      python ./kai/service/incident_store/psql.py --config_filepath ./kai/config.toml --drop_tables False
+  fi
 fi
 
 PYTHONPATH="/kai/kai" exec gunicorn --timeout 3600 -w $NUM_WORKERS --bind 0.0.0.0:8080 --worker-class aiohttp.GunicornWebWorker 'kai.server:app()'
