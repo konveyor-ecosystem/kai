@@ -125,6 +125,16 @@ password = "dog8code"
 #   model = "gpt-3.5-turbo"
 # ```
 
+# **Amazon Bedrock served Anthropic Claude 3.5 Sonnet **
+# ```
+# [models]
+# provider = "ChatBedrock"
+
+# [models.args]
+# model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+# ```
+
+
 [models]
 provider = "ChatIBMGenAI"
 

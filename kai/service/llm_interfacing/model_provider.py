@@ -1,7 +1,7 @@
 from genai import Client, Credentials
 from genai.extensions.langchain.chat_llm import LangChainChatInterface
 from genai.schema import DecodingMethod
-from langchain_community.chat_models import ChatOllama, ChatOpenAI
+from langchain_community.chat_models import BedrockChat, ChatOllama, ChatOpenAI
 from langchain_community.chat_models.fake import FakeListChatModel
 from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic.v1.utils import deep_update
@@ -73,6 +73,16 @@ class ModelProvider:
                         "hap": {"input": True, "output": False, "threshold": 0.01}
                     },
                     "streaming": True,
+                }
+
+                model_args = deep_update(defaults, config.args)
+                model_id = model_args["model_id"]
+
+            case "ChatBedrock":
+                model_class = BedrockChat
+
+                defaults = {
+                    "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
                 }
 
                 model_args = deep_update(defaults, config.args)
