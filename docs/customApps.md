@@ -74,6 +74,11 @@ Before running analysis, make sure that you have `kantra` installed
 1. `./get_latest_kantra_cli.sh` # fetches 'kantra' our analyzer tool and stores it in ../bin
 1. `cd ..`
 
+
+To ensure the analysis uses the necessary custom rules, follow these steps:
+
+- Download or create your custom rules and place them in the samples/custom_rules directory.
+
 To run analysis reports for the applications listed in `./samples/config.py`, run
 
 ```shell=
@@ -97,3 +102,15 @@ Analysis data will be stored in: `samples/analysis_reports/{APP_NAME}/<initial|s
 3. Run [Kantra analysis](https://github.com/konveyor-ecosystem/kai-vscode-plugin/blob/main/docs/user-guide.md#running-kantra-analysis) of the app after selecting the targets you need
 
 4. To fix issues identified during analysis using Kai, follow these [steps](https://github.com/konveyor-ecosystem/kai-vscode-plugin/blob/main/docs/user-guide.md#running-kai-fix)
+
+---
+<b>Note: </b> There are two different places where analysis is performed and currently only one of them is set to ignore the default Kantra rules:
+
+1. Analysis of Sample Data: This runs on several sample applications using both default and custom rules. It simulates integration with a Konveyor instance populated with data. Configuration for this analysis is in [analyze_apps.py](https://github.com/konveyor/kai/blob/main/samples/analyze_apps.py#L83).
+
+2. Client-Side Analysis: This can be handled through example/run_demo.py or running in an IDE. Default rules are ignored, and only custom rules are used. Configuration for this analysis is in [analyze.sh](https://github.com/konveyor/kai/blob/main/example/analyze.sh#L50)
+
+For client-side analysis, use the ``` --enable-default-rulesets=false``` option and then pass in the below directory to use:
+[Konveyor Default Rules](https://github.com/konveyor/kai/tree/main/example/default_rules)
+
+---
